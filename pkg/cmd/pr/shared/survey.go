@@ -268,7 +268,7 @@ func MetadataSurvey(p Prompt, io *iostreams.IOStreams, baseRepo ghrepo.Interface
 	}
 	if isChosen("Projects") {
 		if len(projects) > 0 {
-			selected, err := p.MultiSelect("Projects", state.Projects, projects)
+			selected, err := p.MultiSelect("Projects", state.ProjectTitles, projects)
 			if err != nil {
 				return err
 			}
@@ -317,7 +317,7 @@ func MetadataSurvey(p Prompt, io *iostreams.IOStreams, baseRepo ghrepo.Interface
 		state.Labels = values.Labels
 	}
 	if isChosen("Projects") {
-		state.Projects = values.Projects
+		state.ProjectTitles = values.Projects
 	}
 	if isChosen("Milestone") {
 		if values.Milestone != "" && values.Milestone != noMilestone {

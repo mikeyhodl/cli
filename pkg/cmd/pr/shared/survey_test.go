@@ -80,7 +80,7 @@ func TestMetadataSurvey_selectAll(t *testing.T) {
 	assert.Equal(t, []string{"hubot"}, state.Assignees)
 	assert.Equal(t, []string{"monalisa"}, state.Reviewers)
 	assert.Equal(t, []string{"good first issue"}, state.Labels)
-	assert.Equal(t, []string{"The road to 1.0"}, state.Projects)
+	assert.Equal(t, []string{"The road to 1.0"}, state.ProjectTitles)
 	assert.Equal(t, []string{}, state.Milestones)
 }
 
@@ -125,7 +125,7 @@ func TestMetadataSurvey_keepExisting(t *testing.T) {
 
 	assert.Equal(t, []string{"hubot"}, state.Assignees)
 	assert.Equal(t, []string{"good first issue"}, state.Labels)
-	assert.Equal(t, []string{"The road to 1.0"}, state.Projects)
+	assert.Equal(t, []string{"The road to 1.0"}, state.ProjectTitles)
 }
 
 // TODO projectsV1Deprecation

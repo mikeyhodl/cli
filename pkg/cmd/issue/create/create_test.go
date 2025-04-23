@@ -474,6 +474,7 @@ func Test_createRun(t *testing.T) {
 			opts.BaseRepo = func() (ghrepo.Interface, error) {
 				return ghrepo.New("OWNER", "REPO"), nil
 			}
+			opts.Detector = &fd.EnabledDetectorMock{}
 			browser := &browser.Stub{}
 			opts.Browser = browser
 
@@ -1095,6 +1096,73 @@ func TestProjectsV1Deprecation(t *testing.T) {
 				Detector: &fd.DisabledDetectorMock{},
 				Title:    "Test Title",
 				Body:     "Test Body",
+				// Required to force a lookup of projects
+				Projects: []string{"Project"},
+			})
+
+			// Verify that our request contained projectCards
+			reg.Verify(t)
+		})
+	})
+
+	t.Run("web mode", func(t *testing.T) {
+		t.Run("when projects v1 is supported, queries for it", func(t *testing.T) {
+			ios, _, _, _ := iostreams.Test()
+
+			reg := &httpmock.Registry{}
+			reg.Register(
+				// ( is required to avoid matching projectsV2
+				httpmock.GraphQL(`projects\(`),
+				// Simulate a GraphQL error to early exit the test.
+				httpmock.StatusStringResponse(500, ""),
+			)
+
+			_, cmdTeardown := run.Stub()
+			defer cmdTeardown(t)
+
+			// Ignore the error because we have no way to really stub it without
+			// fully stubbing a GQL error structure in the request body.
+			_ = createRun(&CreateOptions{
+				IO: ios,
+				HttpClient: func() (*http.Client, error) {
+					return &http.Client{Transport: reg}, nil
+				},
+				BaseRepo: func() (ghrepo.Interface, error) {
+					return ghrepo.New("OWNER", "REPO"), nil
+				},
+
+				Detector: &fd.EnabledDetectorMock{},
+				WebMode:  true,
+				// Required to force a lookup of projects
+				Projects: []string{"Project"},
+			})
+
+			// Verify that our request contained projects
+			reg.Verify(t)
+		})
+
+		t.Run("when projects v1 is not supported, does not query for it", func(t *testing.T) {
+			ios, _, _, _ := iostreams.Test()
+
+			reg := &httpmock.Registry{}
+			// ( is required to avoid matching projectsV2
+			reg.Exclude(t, httpmock.GraphQL(`projects\(`))
+
+			_, cmdTeardown := run.Stub()
+			defer cmdTeardown(t)
+
+			// Ignore the error because we're not really interested in it.
+			_ = createRun(&CreateOptions{
+				IO: ios,
+				HttpClient: func() (*http.Client, error) {
+					return &http.Client{Transport: reg}, nil
+				},
+				BaseRepo: func() (ghrepo.Interface, error) {
+					return ghrepo.New("OWNER", "REPO"), nil
+				},
+
+				Detector: &fd.DisabledDetectorMock{},
+				WebMode:  true,
 				// Required to force a lookup of projects
 				Projects: []string{"Project"},
 			})

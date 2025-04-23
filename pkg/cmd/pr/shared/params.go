@@ -12,7 +12,7 @@ import (
 	"github.com/google/shlex"
 )
 
-func WithPrAndIssueQueryParams(client *api.Client, baseRepo ghrepo.Interface, baseURL string, state IssueMetadataState) (string, error) {
+func WithPrAndIssueQueryParams(client *api.Client, baseRepo ghrepo.Interface, baseURL string, state IssueMetadataState, projectsV1Support gh.ProjectsV1Support) (string, error) {
 	u, err := url.Parse(baseURL)
 	if err != nil {
 		return "", err
@@ -35,8 +35,8 @@ func WithPrAndIssueQueryParams(client *api.Client, baseRepo ghrepo.Interface, ba
 	if len(state.Labels) > 0 {
 		q.Set("labels", strings.Join(state.Labels, ","))
 	}
-	if len(state.Projects) > 0 {
-		projectPaths, err := api.ProjectNamesToPaths(client, baseRepo, state.Projects)
+	if len(state.ProjectTitles) > 0 {
+		projectPaths, err := api.ProjectNamesToPaths(client, baseRepo, state.ProjectTitles, projectsV1Support)
 		if err != nil {
 			return "", fmt.Errorf("could not add to project: %w", err)
 		}
@@ -72,7 +72,7 @@ func fillMetadata(client *api.Client, baseRepo ghrepo.Interface, tb *IssueMetada
 		resolveInput.Labels = tb.Labels
 	}
 
-	if len(tb.Projects) > 0 && (tb.MetadataResult == nil || len(tb.MetadataResult.Projects) == 0) {
+	if len(tb.ProjectTitles) > 0 && (tb.MetadataResult == nil || len(tb.MetadataResult.Projects) == 0) {
 		if projectV1Support == gh.ProjectsV1Supported {
 			resolveInput.ProjectsV1 = true
 		}
@@ -119,7 +119,7 @@ func AddMetadataToIssueParams(client *api.Client, baseRepo ghrepo.Interface, par
 	}
 	params["labelIds"] = labelIDs
 
-	projectIDs, projectV2IDs, err := tb.MetadataResult.ProjectsToIDs(tb.Projects)
+	projectIDs, projectV2IDs, err := tb.MetadataResult.ProjectsToIDs(tb.ProjectTitles)
 	if err != nil {
 		return fmt.Errorf("could not add to project: %w", err)
 	}
